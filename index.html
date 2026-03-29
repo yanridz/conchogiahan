@@ -5,23 +5,23 @@
 <title>Gia Hân ❤️</title>
 
 <style>
-html, body {
-    margin: 0;
-    background: #000;
-    overflow: hidden;
+html,body{
+    margin:0;
+    overflow:hidden;
+    background:#000;
 }
-h1 {
-    position: absolute;
-    width: 100%;
-    top: 10%;
-    text-align: center;
-    font-size: 36px;
-    color: #00ffff;
+canvas{
+    position:absolute;
+    width:100%;
+    height:100%;
 }
-canvas {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+h1{
+    position:absolute;
+    width:100%;
+    top:10%;
+    text-align:center;
+    color:#00ffff;
+    font-size:36px;
 }
 </style>
 </head>
@@ -33,240 +33,142 @@ canvas {
 <audio id="voice" src="voice.mp4"></audio>
 
 <script>
-var settings = {
-    particles: {
-        length: 2500,
-        duration: 2.5,
-        velocity: 100,
-        effect: -1,
-        size: 8,
-    },
+var settings={
+    particles:{
+        length:2500,
+        duration:2.5,
+        velocity:100,
+        effect:-1,
+        size:8
+    }
 };
 
-var mode = "heart";
-var startTime = Date.now();
-var scale = 1;
+let mode="heart";
+let startTime=Date.now();
+let imagePoints=[];
 
-let imagePoints = [];
-let imageLoaded = false;
-
-document.body.addEventListener("click", () => {
+// 👉 click phát nhạc
+document.body.addEventListener("click",()=>{
     document.getElementById("voice").play();
-}, { once: true });
+},{once:true});
 
-const image = new Image();
-image.src = "image.png";
+// ===== LOAD ẢNH =====
+const image=new Image();
+image.src="image.png";
 
-image.onload = function(){
+image.onload=function(){
     createImagePoints();
-    imageLoaded = true;
-
-    console.log("POINTS:", imagePoints.length);
-
-    setTimeout(() => {
-        mode = "image";
-    }, 2000);
+    setTimeout(()=>mode="image",2000);
 };
 
-image.onerror = function(){
-    alert("❌ Không load được image.png");
+function Point(x,y){
+    this.x=x||0;
+    this.y=y||0;
+}
+Point.prototype.clone=function(){return new Point(this.x,this.y);};
+Point.prototype.length=function(l){
+    if(l===undefined)return Math.sqrt(this.x*this.x+this.y*this.y);
+    this.normalize();this.x*=l;this.y*=l;return this;
 };
-
-function Point(x,y){this.x=x||0;this.y=y||0;}
-Point.prototype.clone=function(){return new Point(this.x,this.y);}
-Point.prototype.length=function(length){
-if(length===undefined)return Math.sqrt(this.x*this.x+this.y*this.y);
-this.normalize();this.x*=length;this.y*=length;return this;}
 Point.prototype.normalize=function(){
-var l=this.length();this.x/=l;this.y/=l;return this;}
-
-function Particle(){
-this.position=new Point();
-this.velocity=new Point();
-this.acceleration=new Point();
-this.age=0;
-}
-
-Particle.prototype.initialize=function(x,y,dx,dy){
-this.position.x=x;
-this.position.y=y;
-this.velocity.x=dx;
-this.velocity.y=dy;
-this.acceleration.x=dx*settings.particles.effect;
-this.acceleration.y=dy*settings.particles.effect;
-this.age=0;
+    let l=this.length();
+    this.x/=l;this.y/=l;
+    return this;
 };
 
-Particle.prototype.update=function(delta){
-this.position.x+=this.velocity.x*delta;
-this.position.y+=this.velocity.y*delta;
-this.velocity.x+=this.acceleration.x*delta;
-this.velocity.y+=this.acceleration.y*delta;
-this.age+=delta;
-};
-
-Particle.prototype.draw=function(ctx,img){
-function ease(t){return(--t)*t*t+1;}
-var size=img.width*ease(this.age/settings.particles.duration);
-ctx.globalAlpha=1-this.age/settings.particles.duration;
-ctx.drawImage(img,this.position.x-size/2,this.position.y-size/2,size,size);
-};
-
-function ParticlePool(length){
-this.particles=new Array(length);
-for(var i=0;i<length;i++)this.particles[i]=new Particle();
-this.firstActive=0;
-this.firstFree=0;
-this.duration=settings.particles.duration;
-}
-
-ParticlePool.prototype.add=function(x,y,dx,dy){
-this.particles[this.firstFree].initialize(x,y,dx,dy);
-this.firstFree=(this.firstFree+1)%this.particles.length;
-if(this.firstActive==this.firstFree)
-this.firstActive=(this.firstActive+1)%this.particles.length;
-};
-
-ParticlePool.prototype.update=function(delta){
-var i;
-if(this.firstActive<this.firstFree){
-for(i=this.firstActive;i<this.firstFree;i++)this.particles[i].update(delta);
-}else{
-for(i=this.firstActive;i<this.particles.length;i++)this.particles[i].update(delta);
-for(i=0;i<this.firstFree;i++)this.particles[i].update(delta);
-}
-while(this.particles[this.firstActive].age>=this.duration
-&&this.firstActive!=this.firstFree){
-this.firstActive=(this.firstActive+1)%this.particles.length;
-}
-};
-
-ParticlePool.prototype.draw=function(ctx,img){
-var i;
-if(this.firstActive<this.firstFree){
-for(i=this.firstActive;i<this.firstFree;i++)this.particles[i].draw(ctx,img);
-}else{
-for(i=this.firstActive;i<this.particles.length;i++)this.particles[i].draw(ctx,img);
-for(i=0;i<this.firstFree;i++)this.particles[i].draw(ctx,img);
-}
-};
-
-function heartShape(t){
-return new Point(
-160*Math.pow(Math.sin(t),3),
-130*Math.cos(t)-50*Math.cos(2*t)
--20*Math.cos(3*t)
--10*Math.cos(4*t)+25
-);
-}
-
-// ===== CHỈ LẤY PIXEL KHÁC NỀN TRẮNG =====
+// ===== FIX IMAGE POINTS (QUAN TRỌNG) =====
 function createImagePoints(){
-    var c = document.createElement("canvas");
-    var ctx = c.getContext("2d");
 
-    c.width = 300;
-    c.height = 300;
+    let c=document.createElement("canvas");
+    let ctx=c.getContext("2d");
 
-    ctx.drawImage(image, 0, 0, 300, 300);
+    c.width=300;
+    c.height=300;
 
-    var data = ctx.getImageData(0, 0, 300, 300).data;
+    ctx.drawImage(image,0,0,300,300);
 
-    imagePoints = [];
+    let data=ctx.getImageData(0,0,300,300).data;
 
-    // nền trắng gần 255
-    let bg = 255;
+    imagePoints=[];
 
-    for (let y = 0; y < 300; y += 2) {
-        for (let x = 0; x < 300; x += 2) {
-            let i = (y * 300 + x) * 4;
-            let r = data[i], g = data[i+1], b = data[i+2];
+    for(let y=0;y<300;y+=2){
+        for(let x=0;x<300;x+=2){
 
-            let brightness = (r + g + b) / 3;
+            let i=(y*300+x)*4;
 
-            // lọc trắng nền
-            if (brightness < 240) {
-                imagePoints.push(new Point(x - 150, 150 - y));
+            let r=data[i];
+            let g=data[i+1];
+            let b=data[i+2];
+            let a=data[i+3];
+
+            let brightness=(r+g+b)/3;
+
+            // 🔥 lọc nền trắng + giữ biên dạng
+            let contrast=Math.max(r,g,b)-Math.min(r,g,b);
+
+            if(a>50 && brightness<245 && contrast>15){
+                imagePoints.push(new Point(x-150,150-y));
             }
         }
     }
 
-    console.log("POINTS =", imagePoints.length);
+    // 🔥 giảm block vuông
+    imagePoints=imagePoints.filter((_,i)=>i%3===0);
+
+    console.log("POINTS:",imagePoints.length);
 }
 
+// ===== HEART SHAPE =====
+function heart(t){
+    return new Point(
+        160*Math.pow(Math.sin(t),3),
+        130*Math.cos(t)-50*Math.cos(2*t)
+        -20*Math.cos(3*t)-10*Math.cos(4*t)+25
+    );
+}
+
+// ===== RENDER =====
 (function(canvas){
-var ctx=canvas.getContext("2d"),
-particles=new ParticlePool(settings.particles.length),
-rate=settings.particles.length/settings.particles.duration,
-time;
 
-var img=(function(){
-var c=document.createElement("canvas");
-var ctx=c.getContext("2d");
-c.width=settings.particles.size;
-c.height=settings.particles.size;
-
-ctx.beginPath();
-ctx.arc(c.width/2,c.height/2,c.width/2,0,Math.PI*2);
-ctx.fillStyle="#00ffff";
-ctx.fill();
-
-var i=new Image();
-i.src=c.toDataURL();
-return i;
-})();
-
-function render(){
-requestAnimationFrame(render);
-
-var now=Date.now();
-var delta=(now-(time||now))/1000;
-time=now;
-
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-if(mode==="heart"){
-let t=(now-startTime)/1000;
-scale=1+Math.sin(t*4)*0.2;
-} else {
-scale=1;
-}
-
-var amount=rate*delta;
-
-for(var i=0;i<amount;i++){
-var pos;
-
-if(mode==="heart"){
-pos=heartShape(Math.PI-2*Math.PI*Math.random());
-pos.x*=scale;
-pos.y*=scale;
-}
-else if(mode==="image"){
-if(imagePoints.length===0) continue;
-pos=imagePoints[Math.floor(Math.random()*imagePoints.length)];
-}
-
-var dir=pos.clone().length(settings.particles.velocity);
-
-particles.add(
-canvas.width/2+pos.x,
-canvas.height/2-pos.y,
-dir.x,-dir.y
-);
-}
-
-particles.update(delta);
-particles.draw(ctx,img);
-}
+let ctx=canvas.getContext("2d");
 
 function resize(){
-canvas.width=canvas.clientWidth;
-canvas.height=canvas.clientHeight;
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
+}
+window.onresize=resize;
+resize();
+
+function draw(){
+    requestAnimationFrame(draw);
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    let t=(Date.now()-startTime)/1000;
+
+    let count=20;
+
+    for(let i=0;i<count;i++){
+
+        let p;
+
+        if(mode==="heart"){
+            p=heart(Math.PI*2*Math.random());
+        }else{
+            if(imagePoints.length===0)continue;
+            p=imagePoints[Math.floor(Math.random()*imagePoints.length)];
+        }
+
+        ctx.fillStyle="#00ffff";
+        ctx.fillRect(
+            canvas.width/2+p.x,
+            canvas.height/2-p.y,
+            2,2
+        );
+    }
 }
 
-window.onresize=resize;
-setTimeout(()=>{resize();render();},10);
+draw();
 
 })(document.getElementById("pinkboard"));
 </script>
