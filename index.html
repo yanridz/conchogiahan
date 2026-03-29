@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Gia Hân</title>
+<title>Gia Hân ❤️</title>
 
 <style>
 html, body {
@@ -52,14 +52,14 @@ var scale = 1;
 let imagePoints = [];
 let imageLoaded = false;
 
-// 👉 click để phát nhạc
+// 👉 click phát nhạc
 document.body.addEventListener("click", () => {
     document.getElementById("voice").play();
 }, { once: true });
 
-// ===== LOAD ẢNH (FIX CHÍNH) =====
+// ===== LOAD ẢNH =====
 const image = new Image();
-image.src = "image.png"; // ⚠️ PHẢI ĐÚNG TÊN FILE
+image.src = "image.png";
 
 image.onload = function(){
     createImagePoints();
@@ -67,7 +67,6 @@ image.onload = function(){
 
     console.log("POINTS:", imagePoints.length);
 
-    // 👉 chỉ chuyển khi đã có ảnh
     setTimeout(() => {
         mode = "image";
     }, 2000);
@@ -77,7 +76,7 @@ image.onerror = function(){
     alert("❌ Không load được image.png");
 };
 
-// ===== Point =====
+// ===== POINT =====
 function Point(x,y){this.x=x||0;this.y=y||0;}
 Point.prototype.clone=function(){return new Point(this.x,this.y);}
 Point.prototype.length=function(length){
@@ -86,7 +85,7 @@ this.normalize();this.x*=length;this.y*=length;return this;}
 Point.prototype.normalize=function(){
 var l=this.length();this.x/=l;this.y/=l;return this;}
 
-// ===== Particle =====
+// ===== PARTICLE =====
 function Particle(){
 this.position=new Point();
 this.velocity=new Point();
@@ -119,7 +118,7 @@ ctx.globalAlpha=1-this.age/settings.particles.duration;
 ctx.drawImage(img,this.position.x-size/2,this.position.y-size/2,size,size);
 };
 
-// ===== Pool =====
+// ===== POOL =====
 function ParticlePool(length){
 this.particles=new Array(length);
 for(var i=0;i<length;i++)this.particles[i]=new Particle();
@@ -169,26 +168,46 @@ return new Point(
 );
 }
 
-// ===== TẠO ẢNH =====
+// ===== FIX ẢNH (KHÔNG RA HÌNH VUÔNG) =====
 function createImagePoints(){
-var c=document.createElement("canvas");
-var ctx=c.getContext("2d");
+    var c = document.createElement("canvas");
+    var ctx = c.getContext("2d");
 
-c.width=300;
-c.height=300;
+    c.width = 300;
+    c.height = 300;
 
-ctx.drawImage(image,0,0,300,300);
+    ctx.drawImage(image, 0, 0, 300, 300);
 
-var data=ctx.getImageData(0,0,300,300).data;
+    var data = ctx.getImageData(0, 0, 300, 300).data;
 
-for(let y=0;y<300;y+=3){
-for(let x=0;x<300;x+=3){
-let i=(y*300+x)*4;
-if(data[i+3]>128){
-imagePoints.push(new Point(x-150,150-y));
-}
-}
-}
+    imagePoints = [];
+
+    let bg = 255;
+    for (let i = 0; i < data.length; i += 4) {
+        let avg = (data[i] + data[i+1] + data[i+2]) / 3;
+        if (avg < bg) bg = avg;
+    }
+
+    for (let y = 0; y < 300; y += 3) {
+        for (let x = 0; x < 300; x += 3) {
+
+            let i = (y * 300 + x) * 4;
+
+            let r = data[i];
+            let g = data[i + 1];
+            let b = data[i + 2];
+            let a = data[i + 3];
+
+            let brightness = (r + g + b) / 3;
+
+            // 👉 lọc mạnh để tránh hình vuông
+            if (a > 80 && Math.abs(brightness - bg) > 18) {
+                imagePoints.push(new Point(x - 150, 150 - y));
+            }
+        }
+    }
+
+    console.log("POINTS =", imagePoints.length);
 }
 
 // ===== MAIN =====
@@ -223,11 +242,9 @@ time=now;
 
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
-// 💓 tim đập
 if(mode==="heart"){
 let t=(now-startTime)/1000;
 scale=1+Math.sin(t*4)*0.2;
-if(t>5) scale=1+Math.sin(t*10)*0.35;
 } else {
 scale=1;
 }
@@ -241,8 +258,9 @@ if(mode==="heart"){
 pos=heartShape(Math.PI-2*Math.PI*Math.random());
 pos.x*=scale;
 pos.y*=scale;
-}else if(mode==="image"){
-if(imagePoints.length === 0) continue;
+}
+else if(mode==="image"){
+if(imagePoints.length===0) continue;
 pos=imagePoints[Math.floor(Math.random()*imagePoints.length)];
 }
 
