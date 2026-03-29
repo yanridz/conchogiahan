@@ -10,7 +10,6 @@ html, body {
     background: #000;
     overflow: hidden;
 }
-
 h1 {
     position: absolute;
     width: 100%;
@@ -19,7 +18,6 @@ h1 {
     font-size: 36px;
     color: #00ffff;
 }
-
 canvas {
     position: absolute;
     width: 100%;
@@ -52,12 +50,10 @@ var scale = 1;
 let imagePoints = [];
 let imageLoaded = false;
 
-// 👉 click phát nhạc
 document.body.addEventListener("click", () => {
     document.getElementById("voice").play();
 }, { once: true });
 
-// ===== LOAD ẢNH =====
 const image = new Image();
 image.src = "image.png";
 
@@ -76,7 +72,6 @@ image.onerror = function(){
     alert("❌ Không load được image.png");
 };
 
-// ===== POINT =====
 function Point(x,y){this.x=x||0;this.y=y||0;}
 Point.prototype.clone=function(){return new Point(this.x,this.y);}
 Point.prototype.length=function(length){
@@ -85,7 +80,6 @@ this.normalize();this.x*=length;this.y*=length;return this;}
 Point.prototype.normalize=function(){
 var l=this.length();this.x/=l;this.y/=l;return this;}
 
-// ===== PARTICLE =====
 function Particle(){
 this.position=new Point();
 this.velocity=new Point();
@@ -118,7 +112,6 @@ ctx.globalAlpha=1-this.age/settings.particles.duration;
 ctx.drawImage(img,this.position.x-size/2,this.position.y-size/2,size,size);
 };
 
-// ===== POOL =====
 function ParticlePool(length){
 this.particles=new Array(length);
 for(var i=0;i<length;i++)this.particles[i]=new Particle();
@@ -158,7 +151,6 @@ for(i=0;i<this.firstFree;i++)this.particles[i].draw(ctx,img);
 }
 };
 
-// ===== HEART =====
 function heartShape(t){
 return new Point(
 160*Math.pow(Math.sin(t),3),
@@ -168,7 +160,7 @@ return new Point(
 );
 }
 
-// ===== FIX ẢNH (KHÔNG RA HÌNH VUÔNG) =====
+// ===== CHỈ LẤY PIXEL KHÁC NỀN TRẮNG =====
 function createImagePoints(){
     var c = document.createElement("canvas");
     var ctx = c.getContext("2d");
@@ -182,26 +174,18 @@ function createImagePoints(){
 
     imagePoints = [];
 
+    // nền trắng gần 255
     let bg = 255;
-    for (let i = 0; i < data.length; i += 4) {
-        let avg = (data[i] + data[i+1] + data[i+2]) / 3;
-        if (avg < bg) bg = avg;
-    }
 
-    for (let y = 0; y < 300; y += 3) {
-        for (let x = 0; x < 300; x += 3) {
-
+    for (let y = 0; y < 300; y += 2) {
+        for (let x = 0; x < 300; x += 2) {
             let i = (y * 300 + x) * 4;
-
-            let r = data[i];
-            let g = data[i + 1];
-            let b = data[i + 2];
-            let a = data[i + 3];
+            let r = data[i], g = data[i+1], b = data[i+2];
 
             let brightness = (r + g + b) / 3;
 
-            // 👉 lọc mạnh để tránh hình vuông
-            if (a > 80 && Math.abs(brightness - bg) > 18) {
+            // lọc trắng nền
+            if (brightness < 240) {
                 imagePoints.push(new Point(x - 150, 150 - y));
             }
         }
@@ -210,7 +194,6 @@ function createImagePoints(){
     console.log("POINTS =", imagePoints.length);
 }
 
-// ===== MAIN =====
 (function(canvas){
 var ctx=canvas.getContext("2d"),
 particles=new ParticlePool(settings.particles.length),
