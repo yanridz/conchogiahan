@@ -30,10 +30,9 @@ canvas {
 
 <body>
 
-<h1 id="title">Gia Hân ❤️</h1>
+<h1>Gia Hân ❤️</h1>
 <canvas id="pinkboard"></canvas>
-
-<audio id="voice" src="./voice.mp4"></audio>
+<audio id="voice" src="voice.mp4"></audio>
 
 <script>
 var settings = {
@@ -53,28 +52,30 @@ var scale = 1;
 let imagePoints = [];
 let imageLoaded = false;
 
-// 👉 CLICK để phát nhạc
+// 👉 click để phát nhạc
 document.body.addEventListener("click", () => {
     document.getElementById("voice").play();
 }, { once: true });
 
-// 👉 load ảnh (FIX CHROME ERROR)
+// ===== LOAD ẢNH (FIX CHÍNH) =====
 const image = new Image();
-image.src = "./image.png"; // ⚠️ ĐẶT ĐÚNG TÊN FILE
+image.src = "image.png"; // ⚠️ PHẢI ĐÚNG TÊN FILE
 
 image.onload = function(){
     createImagePoints();
     imageLoaded = true;
-}
+
+    console.log("POINTS:", imagePoints.length);
+
+    // 👉 chỉ chuyển khi đã có ảnh
+    setTimeout(() => {
+        mode = "image";
+    }, 2000);
+};
 
 image.onerror = function(){
-    alert("❌ Không load được ảnh! Kiểm tra tên file image.png");
-}
-
-// 👉 chuyển sang ảnh sau 10s
-setTimeout(() => {
-    mode = "image";
-}, 10000);
+    alert("❌ Không load được image.png");
+};
 
 // ===== Point =====
 function Point(x,y){this.x=x||0;this.y=y||0;}
@@ -176,7 +177,6 @@ var ctx=c.getContext("2d");
 c.width=300;
 c.height=300;
 
-// vẽ ảnh vào canvas
 ctx.drawImage(image,0,0,300,300);
 
 var data=ctx.getImageData(0,0,300,300).data;
@@ -227,7 +227,7 @@ ctx.clearRect(0,0,canvas.width,canvas.height);
 if(mode==="heart"){
 let t=(now-startTime)/1000;
 scale=1+Math.sin(t*4)*0.2;
-if(t>7) scale=1+Math.sin(t*10)*0.35;
+if(t>5) scale=1+Math.sin(t*10)*0.35;
 } else {
 scale=1;
 }
@@ -241,10 +241,9 @@ if(mode==="heart"){
 pos=heartShape(Math.PI-2*Math.PI*Math.random());
 pos.x*=scale;
 pos.y*=scale;
-}else if(mode==="image" && imageLoaded){
+}else if(mode==="image"){
+if(imagePoints.length === 0) continue;
 pos=imagePoints[Math.floor(Math.random()*imagePoints.length)];
-}else{
-continue;
 }
 
 var dir=pos.clone().length(settings.particles.velocity);
